@@ -9,22 +9,35 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600&display=swap');
 
+/* ── 그레인 SVG 필터 ── */
+.grain-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 128px 128px;
+}
+
 /* ── 전체 배경 ── */
 .stApp {
-    background-color: #0a0a0f;
+    background-color: #1c1c1e;
     background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(180,20,20,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(30,30,80,0.15) 0%, transparent 60%);
+        radial-gradient(ellipse at 10% 0%, rgba(240,240,240,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 100%, rgba(230,57,70,0.05) 0%, transparent 50%);
     font-family: 'DM Sans', sans-serif;
-    color: #e8e0d0;
+    color: #e0dbd4;
 }
 
 /* ── 사이드바 ── */
 section[data-testid="stSidebar"] {
-    background-color: #0f0f18;
-    border-right: 1px solid #2a2a3a;
+    background-color: #f5f2ee;
+    border-right: 1px solid #ddd;
 }
-section[data-testid="stSidebar"] * { color: #e8e0d0 !important; }
+section[data-testid="stSidebar"] * { color: #1c1c1e !important; }
 section[data-testid="stSidebar"] .stMarkdown h3 {
     color: #e63946 !important;
     font-family: 'Bebas Neue', sans-serif !important;
@@ -37,10 +50,10 @@ section[data-testid="stSidebar"] .stMarkdown h3 {
     position: relative;
     padding: 50px 48px 40px;
     margin-bottom: 32px;
-    border: 1px solid #2a2a3a;
+    border: 1px solid #3a3a3c;
     border-radius: 4px;
     overflow: hidden;
-    background: linear-gradient(135deg, #0f0f18 0%, #1a0a0a 100%);
+    background: linear-gradient(135deg, #f5f2ee 0%, #ede8e0 100%);
 }
 .hero::before {
     content: '';
@@ -49,6 +62,10 @@ section[data-testid="stSidebar"] .stMarkdown h3 {
     height: 4px;
     background: linear-gradient(90deg, #e63946, #ff6b6b, #e63946);
 }
+.hero-eyebrow { color: #e63946 !important; }
+.hero-title { color: #1c1c1e !important; }
+.hero-title span { color: #e63946 !important; }
+.hero-sub { color: #888 !important; }
 .hero-eyebrow {
     font-size: 0.7rem;
     font-weight: 600;
@@ -92,8 +109,8 @@ section[data-testid="stSidebar"] .stMarkdown h3 {
 
 /* ── 영화 카드 ── */
 .card {
-    background: #0f0f18;
-    border: 1px solid #2a2a3a;
+    background: #2a2a2c;
+    border: 1px solid #3a3a3c;
     border-left: 3px solid #e63946;
     border-radius: 4px;
     padding: 18px 22px;
@@ -101,7 +118,7 @@ section[data-testid="stSidebar"] .stMarkdown h3 {
     transition: border-color 0.2s, background 0.2s;
 }
 .card:hover {
-    background: #14141f;
+    background: #323234;
     border-left-color: #ff6b6b;
 }
 .card-num {
@@ -169,8 +186,8 @@ section[data-testid="stSidebar"] .stMarkdown h3 {
 
 /* ── 차트 카드 ── */
 .chart-card {
-    background: #0f0f18;
-    border: 1px solid #2a2a3a;
+    background: #2a2a2c;
+    border: 1px solid #3a3a3c;
     border-radius: 4px;
     padding: 16px;
     margin-bottom: 14px;
@@ -272,6 +289,9 @@ def load_data():
     return df
 
 df = load_data()
+
+# ── 그레인 오버레이 ─────────────────────────────────────────
+st.markdown('<div class="grain-overlay"></div>', unsafe_allow_html=True)
 
 # ── 히어로 ──────────────────────────────────────────────────
 holes = "".join(['<div class="film-hole"></div>'] * 12)
