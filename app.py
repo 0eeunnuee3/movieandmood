@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import ast
+import random
 
 # ── 페이지 설정 ──────────────────────────────────────────────
 st.set_page_config(
@@ -10,23 +11,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── Y2K 에디토리얼 CSS ────────────────────────────────────────
+# ── CSS ───────────────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;600;700&display=swap');
 
-    .stApp {
-        background-color: #F5F0E8;
-        font-family: 'DM Sans', sans-serif;
-    }
+    .stApp { background-color: #F5F0E8; font-family: 'DM Sans', sans-serif; }
 
     section[data-testid="stSidebar"] {
         background-color: #FADADD;
         border-right: 3px solid #1a1a1a;
     }
-    section[data-testid="stSidebar"] * {
-        color: #1a1a1a !important;
-    }
+    section[data-testid="stSidebar"] * { color: #1a1a1a !important; }
 
     .hero-wrap {
         background: #E8F4D4;
@@ -34,8 +30,6 @@ st.markdown("""
         border-radius: 20px;
         padding: 36px 40px 28px;
         margin-bottom: 28px;
-        position: relative;
-        overflow: hidden;
     }
     .hero-tag {
         display: inline-block;
@@ -56,11 +50,7 @@ st.markdown("""
         color: #1a1a1a;
         margin: 0 0 10px 0;
     }
-    .hero-sub {
-        font-size: 1rem;
-        color: #555;
-        margin: 0;
-    }
+    .hero-sub { font-size: 1rem; color: #555; margin: 0; }
 
     .card {
         background: #ffffff;
@@ -76,17 +66,8 @@ st.markdown("""
         color: #1a1a1a;
         margin: 0 0 4px 0;
     }
-    .card-meta {
-        font-size: 0.82rem;
-        color: #666;
-        margin-bottom: 8px;
-    }
-    .card-overview {
-        font-size: 0.8rem;
-        color: #888;
-        line-height: 1.5;
-        margin-top: 6px;
-    }
+    .card-meta { font-size: 0.82rem; color: #666; margin-bottom: 8px; }
+    .card-overview { font-size: 0.8rem; color: #888; line-height: 1.5; margin-top: 6px; }
 
     .tag {
         display: inline-block;
@@ -99,49 +80,50 @@ st.markdown("""
         margin: 2px;
         color: #1a1a1a;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     .tag.pink  { background: #FFB3C6; }
     .tag.green { background: #C8F0A0; }
     .tag.blue  { background: #A8D8EA; }
 
     .section-label {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: #999;
-        margin-bottom: 4px;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 3px; text-transform: uppercase;
+        color: #999; margin-bottom: 4px;
     }
     .section-title {
         font-family: 'DM Serif Display', serif;
-        font-size: 1.6rem;
-        color: #1a1a1a;
+        font-size: 1.6rem; color: #1a1a1a;
         margin: 0 0 16px 0;
         border-bottom: 2.5px solid #1a1a1a;
         padding-bottom: 8px;
     }
-
     .chart-card {
         background: #fff;
         border: 2.5px solid #1a1a1a;
         border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 16px;
+        padding: 16px; margin-bottom: 16px;
         box-shadow: 4px 4px 0px #1a1a1a;
     }
-
     .result-badge {
         display: inline-block;
-        background: #1a1a1a;
-        color: #FFE44D;
-        font-weight: 700;
-        font-size: 0.85rem;
-        padding: 4px 14px;
-        border-radius: 30px;
+        background: #1a1a1a; color: #FFE44D;
+        font-weight: 700; font-size: 0.85rem;
+        padding: 4px 14px; border-radius: 30px;
         margin-bottom: 14px;
     }
-
+    .random-card {
+        background: #FFE44D;
+        border: 3px solid #1a1a1a;
+        border-radius: 20px;
+        padding: 24px 28px;
+        margin-bottom: 20px;
+        box-shadow: 5px 5px 0px #1a1a1a;
+    }
+    .random-title {
+        font-family: 'DM Serif Display', serif;
+        font-size: 1.8rem; color: #1a1a1a;
+        margin: 8px 0 6px 0;
+    }
     h1, h2, h3, h4 { color: #1a1a1a !important; }
 </style>
 """, unsafe_allow_html=True)
@@ -166,6 +148,10 @@ MOOD_LABELS = {
     "immersive":  "🚀 완전 몰입하고 싶어",
     "calm":       "☁️ 조용히 힐링하고 싶어",
 }
+
+ALL_GENRES = ["Action","Adventure","Animation","Comedy","Crime","Documentary",
+              "Drama","Family","Fantasy","History","Horror","Music","Mystery",
+              "Romance","Science Fiction","Thriller","War","Western"]
 
 # ── 데이터 로드 ───────────────────────────────────────────────
 @st.cache_data
@@ -204,15 +190,31 @@ st.markdown("""
 
 # ── 사이드바 ─────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🎭 지금 기분이 어때?")
-    selected_mood = st.radio(
-        "",
+    st.markdown("### 🎭 무드 선택")
+    selected_moods = st.multiselect(
+        "기분을 골라봐 (여러 개 가능!)",
         options=list(MOOD_LABELS.keys()),
+        default=["comforting"],
         format_func=lambda x: MOOD_LABELS[x]
     )
 
     st.markdown("---")
-    st.markdown("### ⏱️ 얼마나 볼 수 있어?")
+    st.markdown("### 🎬 장르 선택")
+    selected_genres = st.multiselect(
+        "장르 필터 (선택 안 하면 전체)",
+        options=ALL_GENRES
+    )
+
+    st.markdown("---")
+    st.markdown("### 📅 개봉 연도")
+    year_range = st.select_slider(
+        "",
+        options=["~1990", "1990s", "2000s", "2010s", "2020s~", "전체"],
+        value="전체"
+    )
+
+    st.markdown("---")
+    st.markdown("### ⏱️ 상영시간")
     runtime_option = st.select_slider(
         "",
         options=["90분 이하", "90~120분", "120분 이상", "상관없음"],
@@ -223,9 +225,39 @@ with st.sidebar:
     st.markdown("### ⭐ 최소 평점")
     min_rating = st.slider("", 0.0, 10.0, 7.0, 0.5, format="%.1f")
 
-# ── 필터링 ───────────────────────────────────────────────────
-filtered = df[df["emotions"].apply(lambda x: selected_mood in x)]
+    st.markdown("---")
+    st.markdown("### 🔍 제목 검색")
+    search_query = st.text_input("영화 제목 검색", placeholder="예: Inception")
 
+# ── 필터링 ───────────────────────────────────────────────────
+filtered = df.copy()
+
+# 무드 필터
+if selected_moods:
+    filtered = filtered[filtered["emotions"].apply(
+        lambda x: any(m in x for m in selected_moods)
+    )]
+
+# 장르 필터
+if selected_genres:
+    filtered = filtered[filtered["genre_list"].apply(
+        lambda x: any(g in x for g in selected_genres)
+    )]
+
+# 연도 필터
+if year_range != "전체":
+    if year_range == "~1990":
+        filtered = filtered[filtered["release_year"] < 1990]
+    elif year_range == "1990s":
+        filtered = filtered[(filtered["release_year"] >= 1990) & (filtered["release_year"] < 2000)]
+    elif year_range == "2000s":
+        filtered = filtered[(filtered["release_year"] >= 2000) & (filtered["release_year"] < 2010)]
+    elif year_range == "2010s":
+        filtered = filtered[(filtered["release_year"] >= 2010) & (filtered["release_year"] < 2020)]
+    elif year_range == "2020s~":
+        filtered = filtered[filtered["release_year"] >= 2020]
+
+# 런타임 필터
 if runtime_option == "90분 이하":
     filtered = filtered[filtered["runtime"] <= 90]
 elif runtime_option == "90~120분":
@@ -233,22 +265,51 @@ elif runtime_option == "90~120분":
 elif runtime_option == "120분 이상":
     filtered = filtered[filtered["runtime"] > 120]
 
+# 평점 필터
 filtered = filtered[filtered["vote_average"] >= min_rating]
-filtered = filtered.sort_values("popularity", ascending=False).head(20)
+
+# 검색 필터
+if search_query:
+    filtered = filtered[filtered["title"].str.contains(search_query, case=False, na=False)]
+
+filtered_sorted = filtered.sort_values("popularity", ascending=False)
+
+# ── 오늘의 랜덤 픽 ───────────────────────────────────────────
+st.markdown("### 🎲 오늘의 랜덤 픽")
+if st.button("🎬 랜덤 영화 추천받기!", use_container_width=True):
+    if not filtered_sorted.empty:
+        pick = filtered_sorted.sample(1).iloc[0]
+        year = int(pick["release_year"]) if pd.notna(pick["release_year"]) else "N/A"
+        st.markdown(f"""
+        <div class="random-card">
+            <div style="font-size:0.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;">✦ Today's Pick</div>
+            <div class="random-title">{pick['title']} ({year})</div>
+            <div style="font-size:0.9rem;color:#444;">⭐ {pick['vote_average']:.1f} &nbsp;·&nbsp; ⏱️ {int(pick['runtime'])}분 &nbsp;·&nbsp; {pick['genre_str']}</div>
+            <div style="font-size:0.85rem;color:#666;margin-top:10px;">{str(pick.get('overview',''))[:200]}...</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.warning("조건에 맞는 영화가 없어요!")
+
+st.markdown("---")
 
 # ── 레이아웃 ─────────────────────────────────────────────────
 col_movies, col_charts = st.columns([2, 1], gap="large")
 
+# ── 왼쪽: 영화 카드 ──────────────────────────────────────────
 with col_movies:
     st.markdown('<div class="section-label">RESULTS</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="section-title">{MOOD_LABELS[selected_mood]}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="result-badge">✦ {len(filtered)}편 발견</div>', unsafe_allow_html=True)
+    mood_label = " + ".join([MOOD_LABELS[m] for m in selected_moods]) if selected_moods else "전체"
+    st.markdown(f'<div class="section-title">{mood_label}</div>', unsafe_allow_html=True)
 
-    if filtered.empty:
+    top20 = filtered_sorted.head(20)
+    st.markdown(f'<div class="result-badge">✦ {len(filtered_sorted)}편 발견 · 상위 20편 표시</div>', unsafe_allow_html=True)
+
+    if top20.empty:
         st.warning("조건에 맞는 영화가 없어요. 필터를 조정해봐!")
     else:
         colors = ["", "pink", "green", "blue"]
-        for _, row in filtered.iterrows():
+        for _, row in top20.iterrows():
             year = int(row["release_year"]) if pd.notna(row["release_year"]) else "N/A"
             overview = str(row.get("overview", ""))[:160] + "..." if pd.notna(row.get("overview")) else ""
             tags_html = "".join(
@@ -264,51 +325,56 @@ with col_movies:
             </div>
             """, unsafe_allow_html=True)
 
+# ── 오른쪽: 차트 ─────────────────────────────────────────────
 with col_charts:
     st.markdown('<div class="section-label">DATA INSIGHTS</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">분석</div>', unsafe_allow_html=True)
 
-    CHART_BG = "rgba(0,0,0,0)"
-    CHART_FONT = "#1a1a1a"
-    CHART_MARGIN = dict(l=0, r=0, t=10, b=0)
+    BG = "rgba(0,0,0,0)"
+    FC = "#1a1a1a"
+    MG = dict(l=0, r=0, t=10, b=0)
 
+    # 장르 분포
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
     st.markdown("**📊 장르 분포**")
-    all_genres = [g for gl in filtered["genre_list"] for g in gl]
+    all_genres = [g for gl in top20["genre_list"] for g in gl]
     if all_genres:
         gc = pd.Series(all_genres).value_counts().head(8)
         fig1 = px.bar(x=gc.values, y=gc.index, orientation="h",
-                      color=gc.values,
-                      color_continuous_scale=["#A8D8EA", "#FFB3C6", "#FFE44D"])
-        fig1.update_layout(
-            plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
-            font_color=CHART_FONT, showlegend=False,
-            coloraxis_showscale=False, margin=CHART_MARGIN,
-            xaxis_title="영화 수", yaxis_title=""
-        )
+                      color=gc.values, color_continuous_scale=["#A8D8EA","#FFB3C6","#FFE44D"])
+        fig1.update_layout(plot_bgcolor=BG, paper_bgcolor=BG, font_color=FC,
+                           showlegend=False, coloraxis_showscale=False,
+                           margin=MG, xaxis_title="영화 수", yaxis_title="")
         st.plotly_chart(fig1, width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 평점 분포
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
     st.markdown("**⭐ 평점 분포**")
-    fig2 = px.histogram(filtered, x="vote_average", nbins=10,
+    fig2 = px.histogram(top20, x="vote_average", nbins=10,
                         color_discrete_sequence=["#FFB3C6"])
-    fig2.update_layout(
-        plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
-        font_color=CHART_FONT, margin=CHART_MARGIN,
-        xaxis_title="평점", yaxis_title="영화 수"
-    )
+    fig2.update_layout(plot_bgcolor=BG, paper_bgcolor=BG, font_color=FC,
+                       margin=MG, xaxis_title="평점", yaxis_title="영화 수")
     st.plotly_chart(fig2, width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 연도별 분포
+    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    st.markdown("**📅 연도별 분포**")
+    year_data = top20.dropna(subset=["release_year"])
+    fig3 = px.histogram(year_data, x="release_year", nbins=15,
+                        color_discrete_sequence=["#C8F0A0"])
+    fig3.update_layout(plot_bgcolor=BG, paper_bgcolor=BG, font_color=FC,
+                       margin=MG, xaxis_title="개봉연도", yaxis_title="영화 수")
+    st.plotly_chart(fig3, width="stretch")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 런타임 분포
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
     st.markdown("**⏱️ 상영시간 분포**")
-    fig3 = px.histogram(filtered, x="runtime", nbins=10,
-                        color_discrete_sequence=["#C8F0A0"])
-    fig3.update_layout(
-        plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
-        font_color=CHART_FONT, margin=CHART_MARGIN,
-        xaxis_title="상영시간 (분)", yaxis_title="영화 수"
-    )
-    st.plotly_chart(fig3, width="stretch")
+    fig4 = px.histogram(top20, x="runtime", nbins=10,
+                        color_discrete_sequence=["#D4A8EA"])
+    fig4.update_layout(plot_bgcolor=BG, paper_bgcolor=BG, font_color=FC,
+                       margin=MG, xaxis_title="상영시간 (분)", yaxis_title="영화 수")
+    st.plotly_chart(fig4, width="stretch")
     st.markdown('</div>', unsafe_allow_html=True)
